@@ -51,7 +51,7 @@ proc matchAll(line: string, selectors: seq[Selector]): bool =
         if not matchSelector(line, selector):
             return false
 
-proc processLines*(input: Stream, output: Stream, mainRe: Regex, selectors: seq[Selector], includeLineNr: bool, maxMatches: uint, subSelector: Selector, includeMain: bool, onlyLastSub: bool) =
+proc processLines*(input: Stream, output: Stream, mainRe: Regex, selectors: seq[Selector], includeLineNr: bool, maxMatches: uint, subSelector: Selector, includeMain: bool, printOnlyLastSub: bool) =
     
     var nMatches: uint = maxMatches + 1
     var line: string = ""
@@ -62,12 +62,17 @@ proc processLines*(input: Stream, output: Stream, mainRe: Regex, selectors: seq[
     var wasMatchingRange = false
     var lineNr: uint
 #    var prevLine: string = nil
+    var lineToPrint: string = ""
     
     while nMatches > 0'u and readLine(input, line):
         lineNr = lineNr + 1
         isPrevMainLine = isMainLine
         isMainLine = mainRe == nil or matches(line, mainRe)
         if isMainLine:
+            if lineToPrint != "":
+                output.writeLine(lineToPrint)
+                lineToPrint = ""
+            else: discard
             wasMatchingRange = isMatchingRange
             isMatchingRange = matchAll(line, selectors)
             # if we have a matching main line
@@ -80,6 +85,14 @@ proc processLines*(input: Stream, output: Stream, mainRe: Regex, selectors: seq[
         else:
             if isMatchingRange:
                 if subSelector == nil or matchSelector(line, subSelector):
-                    output.writeLine(printLine(line, lineNr, includeLineNr))
+                    let printOut = printLine(line, lineNr, includeLineNr)
+                    if printOnlyLastSub:
+                        lineToPrint = printOut
+                    else:
+                      output.writeLine(printOut)
                 else: discard
             else: discard
+    if lineToPrint != "":
+        output.writeLine(lineToPrint)
+        lineToPrint = ""
+    else: discard

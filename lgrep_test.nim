@@ -33,7 +33,7 @@ suite "general":
     Time1 INFO: Thread1 - Method1: Event1
     Time2 INFO: Thread2 - Method1: Event2
     Time3 DEBUG: Thread1 - Method2: Event1
-    Time4 ERROR: Thread3 - Method2: FirstException1
+    Time4 ERROR: Thread3 - Method2: FirstException
       frame1
       frame2
     Caused by: SecondException
@@ -41,6 +41,11 @@ suite "general":
     Caused by: ThirdException
       frame4
     Time5 INFO: Thread3 - Method2: Event2
+    Time4 WARN: Thread3 - Method2: Exception1
+      frame1
+      frame2
+    Caused by: Exception2
+      frame3
     Time6 DEBUG: Thread2 - Method2: Event2
     """.unindent
     
@@ -75,7 +80,7 @@ suite "general":
     
     let selector = newSelector("Time6")
     let expected = """
-    12: Time6 DEBUG: Thread2 - Method2: Event2
+    17: Time6 DEBUG: Thread2 - Method2: Event2
     """.unindent
     
     processLines(newStringStream(input), output, main, @[selector], true, 999'u, nil, true, false)
@@ -146,7 +151,7 @@ suite "general":
     
     let sel = newSelector("ERROR")
     let expected = """
-    Time4 ERROR: Thread3 - Method2: FirstException1
+    Time4 ERROR: Thread3 - Method2: FirstException
       frame1
       frame2
     Caused by: SecondException
@@ -183,5 +188,27 @@ suite "general":
     """.unindent
     
     processLines(newStringStream(input), output, main, @[sel], false, 999'u, sel1, false, false)
+    check(output.data == expected)
+
+  test "multiline entry can filter last subselection if multiple exist":
+    
+    let sel = newSelector("ERROR")
+    let sel1 = Selector(invert: false, matcher: re("Caused"))
+    let expected = """
+    Caused by: ThirdException
+    """.unindent
+    
+    processLines(newStringStream(input), output, main, @[sel], false, 999'u, sel1, false, true)
+    check(output.data == expected)
+
+  test "multiline entry can filter last subselection if one exists":
+    
+    let sel = newSelector("WARN")
+    let sel1 = Selector(invert: false, matcher: re("Caused"))
+    let expected = """
+    Caused by: Exception2
+    """.unindent
+    
+    processLines(newStringStream(input), output, main, @[sel], false, 999'u, sel1, false, true)
     check(output.data == expected)
 

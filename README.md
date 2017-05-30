@@ -2,15 +2,17 @@
 A variation on grep, targeting log files
 
 **lgrep** is a variation on **grep**, intended for searching through application
-log files. Though most of the time an entry in a log file consists of one line, sometimes an entry may take several lines. A log entry usually consists of a bunch of metadata (e.g date, time, code reference) and a message. Sometimes the message part can take multiple lines, e.g. if it contains a whole JSON object or a whole stack trace.
+log files. Though most of the time an entry in a log file consists of one line, sometimes it spans multiple lines. A log entry usually consists of some metadata (e.g date, time, code reference) and a message. Sometimes the message part may take up multiple lines, e.g. if it contains a whole JSON object or a whole stack trace.
 
 ## The problem
-When filtering log entries from log files I would usually want to keep every log entry intact, even if it consists of several lines. Tools like **grep**, **sed** have individual lines as their unit of work, so if you for instance use grep, you will get only one line of every multiline log entry.
+When filtering log entries from log files I would usually want to keep every log entry intact, even if it spans several lines. Tools like **grep**, **sed** perform selection on a per line basis, so if you for instance use grep, you will get only one line of every multiline log entry.
 
 ## The solution
 In the common cases of multiline log entries (JSON or XML message, stack trace) it is usually quite easy to recognize the whole log entry. This is because log entries normally start with a fixed set of metadata fields. In case of a multiline message usually the additional message lines are easily distinguishable from the main log entry line. If we could tell grep how to make this distinction then it would be able to treat a multiline log entry as one unit. This is the basis for **lgrep**: it takes as an extra argument a regex that matches only the first line - the main line - of a log entry. As this regex is a quite static value in normal use cases, it is also possible to define it as an environment variable. So you have two options:
 - a command line argument:
-  `lgrep -e="firstlineregexpattern" ...`
+  ```
+  lgrep -e="firstlineregexpattern" ...
+  ```
 - an environment variable:
   ```
   export LGREP_ENTRY="firstlineregexpattern"
