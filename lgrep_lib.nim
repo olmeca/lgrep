@@ -52,7 +52,7 @@ proc matchAll(line: string, selectors: seq[Selector]): bool =
             return false
 
 proc processLines*(input: Stream, output: Stream, mainRe: Regex, selectors: seq[Selector], includeLineNr: bool, maxMatches: uint, subSelector: Selector, includeMain: bool, printOnlyLastSub: bool) =
-    
+
     var nMatches: uint = maxMatches + 1
     var line: string = ""
     var isMainLine: bool = mainRe == nil
@@ -64,7 +64,7 @@ proc processLines*(input: Stream, output: Stream, mainRe: Regex, selectors: seq[
 #    var prevLine: string = nil
     var lineToPrint: string = ""
     
-    while nMatches > 0'u and readLine(input, line):
+    while nMatches > 0'u and input.readLine(line):
         lineNr = lineNr + 1
         isPrevMainLine = isMainLine
         isMainLine = mainRe == nil or matches(line, mainRe)

@@ -76,7 +76,7 @@ proc writeHelp() = echo """
     Displays this text.
 """
 
-var filename: string
+var filename: string = nil
 var printLineNrs: bool = false
 var maxMatches: uint = 9223372036854775807'u
 var includeEntryLine: bool = true
@@ -87,6 +87,7 @@ var subLinePattern: string = nil
 var subLineSelector: Selector = nil
 var debug: bool = false
 var printHelp: bool = false
+var file: File = nil
 
 for kind, key, val in getopt():
   case kind
@@ -135,12 +136,13 @@ if debug:
 else: discard
 
 if printHelp:
-  writeHelp()
+   writeHelp()
 else:
-  var inputStream: Stream
-  var mainRe: Regex = if entryLinePattern == "": nil else: re(entryLinePattern)
-  if filename == "":
-    processLines(newFileStream(stdin), newFileStream(stdout), mainRe, selectors, printLineNrs, maxMatches, sublineSelector, includeEntryLine, showOnlyLastSublineMatched)
-  else:
-    processLines(newFileStream(filename, fmRead), newFileStream(stdout), mainRe, selectors, printLineNrs, maxMatches, sublineSelector, includeEntryLine, showOnlyLastSublineMatched)
+   let mainRe: Regex = if entryLinePattern == "": nil else: re(entryLinePattern)
+   if isNil(filename): 
+      let input = newFileStream(stdin)
+      processLines(input, newFileStream(stdout), mainRe, selectors, printLineNrs, maxMatches, sublineSelector, includeEntryLine, showOnlyLastSublineMatched)
+   else: 
+      let input = newFileStream(filename, fmRead)
+      processLines(input, newFileStream(stdout), mainRe, selectors, printLineNrs, maxMatches, sublineSelector, includeEntryLine, showOnlyLastSublineMatched)
   
