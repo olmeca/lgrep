@@ -11,12 +11,12 @@ proc writeHelp() = echo """
   e.g.   lgrep -i="Exception:" -x="DEBUG" server.log
   
   This will select all entries containing the string "Exception", but
-  not those that also contain the string "DEBUG".
+  excluding those that also contain the string "DEBUG".
   
   lgrep is a variation on grep, intended for searching through application
   log files. It makes a distinction between 'log entries' and 'sublines'. 
-  A log entry usually consists of some metadata items and a message. 
-  The whole entry is usually printed as one line.
+  A log entry usually consists of some metadata items and a message and 
+  the whole entry is usually printed as one line.
   But sometimes the message part contains several lines, like e.g.
   a stack trace or an XML or JSON message. Using normal grep in such cases
   you only get the first line of the messages. Other lines are filtered out
@@ -33,15 +33,21 @@ proc writeHelp() = echo """
   Furthermore, because log file analysis usually involves multiple pattern
   matches and because log files are usually huge, lgrep will take multiple
   patterns as command line options and apply all in one go.
+  Another characteristic of log file analysis is that oftentimes the focus
+  is on a specific period of time. Log entries normally contain timestamps,
+  so why not be able to express the time range of interest? This can be
+  done by passing optional start time and end time regex patterns as
+  command line arguments.
   
   Options 
     -i=<pattern> or --include=<pattern> e.g. -i=ERROR
     Specifies a regex pattern. Entries that don't match the pattern will
     not be included in the result set. The pattern is only applied to the
     first line of every log entry, as that is where the metadata and main
-    message part are found. Multiple patterns can be specified on a
-    command line. A log entry will have to match all patterns specified
-    to be included in the result set.
+    message part are found. 
+    Multiple patterns can be specified on the command line by repeating 
+    '-i=<pattern1> -i=<pattern2>'. A log entry will have to match 
+    all patterns specified to be included in the result set.
     
     -I=<pattern> or includeIgnorecase=<pattern> e.g. -I=debug -I="\[debug\]"
     Specifies a regex pattern to be applied ignoring character case.
@@ -50,6 +56,9 @@ proc writeHelp() = echo """
     -x=<pattern> or --exclude=<pattern e.g. -x="status=OK"
     Specifies a regex pattern. Entries that match the pattern will be
     excluded from the result set.
+    Multiple patterns can be specified on the command line by repeating 
+    '-x=<pattern1> -x=<pattern2>'. A log entry will have to match 
+    all patterns specified to be included in the result set.
     
     -X=<pattern> or --excludeIgnoreCase=<pattern>
     Specifies a regex pattern to be applied ignoring character case.
@@ -64,6 +73,16 @@ proc writeHelp() = echo """
       export LGREP_ENTRY="^2017-03-15"
     if every log entry starts with that date string.
     
+    -f=<pattern> or --from=<pattern>
+    Used to specify the start of a range of interest within the log file.
+    E.g. specify a timestamp regex. The part of the file before the first
+    match of the regex will be suppressed from the output.
+    
+    t=<pattern> or --to=<pattern>
+    Used to specify the end of a range of interest within the log file.
+    E.g. specify a timestamp regex. The part of the file from the first
+    match of the regex on will be suppressed from the output.
+    
     -n or --numbers
     Prepend the line number to every line in the output.
     
@@ -74,6 +93,8 @@ proc writeHelp() = echo """
     
     -h or --help
     Displays this text.
+    
+    lgrep is based on PCRE (www.pcre.org).
 """
 
 var filename: string = nil
@@ -121,9 +142,9 @@ for kind, key, val in getopt():
       showOnlyLastSublineMatched = true
     of "debug", "d":
       debug = true
-    of "fromPattern", "f":
+    of "from", "f":
       fromRe = re(val)
-    of "toPattern", "t":
+    of "to", "t":
       toRe = re(val)
   of cmdEnd: assert(false) # cannot happen
 
