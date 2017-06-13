@@ -41,12 +41,12 @@ suite "general":
     Caused by: ThirdException
       frame4
     Time5 INFO: Thread3 - Method2: Event2
-    Time4 WARN: Thread3 - Method2: Exception1
+    Time6 WARN: Thread3 - Method2: Exception1
       frame1
       frame2
     Caused by: Exception2
       frame3
-    Time6 DEBUG: Thread2 - Method2: Event2
+    Time7 DEBUG: Thread2 - Method2: Event2
     """.unindent
     
     let main = re("Time")
@@ -55,7 +55,7 @@ suite "general":
 
   test "call without selectors returns input":
     
-    processLines(newStringStream(input), output, nil, @[], false, 999'u, nil, true, false)
+    processLines(newStringStream(input), output, nil, nil, nil, @[], false, 999'u, nil, true, false)
     check(output.data == input)
 
   test "inclusion selector returns empty resul if no match exists":
@@ -63,7 +63,7 @@ suite "general":
     let sel = newSelector("TRACE")
     let expected = ""
 
-    processLines(newStringStream(input), output, main, @[sel], false, 999'u, nil, true, false)
+    processLines(newStringStream(input), output, main, nil, nil, @[sel], false, 999'u, nil, true, false)
     check(output.data == expected)
 
   test "selects the line matching the unique inclusion selector":
@@ -73,17 +73,17 @@ suite "general":
     Time3 DEBUG: Thread1 - Method2: Event1
     """.unindent
     
-    processLines(newStringStream(input), output, main, @[sel], false, 999'u, nil, true, false)
+    processLines(newStringStream(input), output, main, nil, nil, @[sel], false, 999'u, nil, true, false)
     check(output.data == expected)
 
   test "line number is added to result if requested":
     
-    let selector = newSelector("Time6")
+    let selector = newSelector("Time7")
     let expected = """
-    17: Time6 DEBUG: Thread2 - Method2: Event2
+    17: Time7 DEBUG: Thread2 - Method2: Event2
     """.unindent
     
-    processLines(newStringStream(input), output, main, @[selector], true, 999'u, nil, true, false)
+    processLines(newStringStream(input), output, main, nil, nil, @[selector], true, 999'u, nil, true, false)
     check(output.data == expected)
 
   test "selects multiple lines with inclusion selector":
@@ -91,21 +91,21 @@ suite "general":
     let selector = newSelector("DEBUG")
     let expected = """
     Time3 DEBUG: Thread1 - Method2: Event1
-    Time6 DEBUG: Thread2 - Method2: Event2
+    Time7 DEBUG: Thread2 - Method2: Event2
     """.unindent
 
-    processLines(newStringStream(input), output, main, @[selector], false, 999'u, nil, true, false)
+    processLines(newStringStream(input), output, main, nil, nil, @[selector], false, 999'u, nil, true, false)
     check(output.data == expected)
 
-  test "interesction of multiple inclusion selectors":
+  test "selects intersection of multiple inclusion selectors":
     
     let sel1 = newSelector("DEBUG")
     let sel2 = newSelector("Event2")
     let expected = """
-    Time6 DEBUG: Thread2 - Method2: Event2
+    Time7 DEBUG: Thread2 - Method2: Event2
     """.unindent
 
-    processLines(newStringStream(input), output, main, @[sel1, sel2], false, 999'u, nil, true, false)
+    processLines(newStringStream(input), output, main, nil, nil, @[sel1, sel2], false, 999'u, nil, true, false)
     check(output.data == expected)
 
   test "inclusion selector only matches main entry lines":
@@ -113,7 +113,7 @@ suite "general":
     let sel1 = newSelector("frame")
     let expected = ""
 
-    processLines(newStringStream(input), output, main, @[sel1], false, 999'u, nil, true, false)
+    processLines(newStringStream(input), output, main, nil, nil, @[sel1], false, 999'u, nil, true, false)
     check(output.data == expected)
 
   test "intersection of multiple exclusion selectors":
@@ -122,7 +122,7 @@ suite "general":
     let sel2 = Selector(invert: true, matcher: re("ERROR"))
     let expected = """
     Time3 DEBUG: Thread1 - Method2: Event1
-    Time6 DEBUG: Thread2 - Method2: Event2
+    Time7 DEBUG: Thread2 - Method2: Event2
     """.unindent
 
   test "intersection of inclusion selector and exclusion selector":
@@ -133,7 +133,7 @@ suite "general":
     Time5 INFO: Thread3 - Method2: Event2
     """.unindent
 
-    processLines(newStringStream(input), output, main, @[sel1, sel2], false, 999'u, nil, true, false)
+    processLines(newStringStream(input), output, main, nil, nil, @[sel1, sel2], false, 999'u, nil, true, false)
     check(output.data == expected)
 
   test "maximum matches limits result set with inclusion selector":
@@ -144,7 +144,7 @@ suite "general":
     Time2 INFO: Thread2 - Method1: Event2
     """.unindent
 
-    processLines(newStringStream(input), output, main, @[sel], false, 2'u, nil, true, false)
+    processLines(newStringStream(input), output, main, nil, nil, @[sel], false, 2'u, nil, true, false)
     check(output.data == expected)
 
   test "multiline entry is selected in its entirity":
@@ -160,7 +160,7 @@ suite "general":
       frame4
     """.unindent
     
-    processLines(newStringStream(input), output, main, @[sel], false, 999'u, nil, true, false)
+    processLines(newStringStream(input), output, main, nil, nil, @[sel], false, 999'u, nil, true, false)
     check(output.data == expected)
 
   test "multiline entry can suppress main line":
@@ -175,7 +175,7 @@ suite "general":
       frame4
     """.unindent
     
-    processLines(newStringStream(input), output, main, @[sel], false, 999'u, nil, false, false)
+    processLines(newStringStream(input), output, main, nil, nil, @[sel], false, 999'u, nil, false, false)
     check(output.data == expected)
 
   test "multiline entry can make inclusion subselection":
@@ -187,7 +187,7 @@ suite "general":
     Caused by: ThirdException
     """.unindent
     
-    processLines(newStringStream(input), output, main, @[sel], false, 999'u, sel1, false, false)
+    processLines(newStringStream(input), output, main, nil, nil, @[sel], false, 999'u, sel1, false, false)
     check(output.data == expected)
 
   test "multiline entry can filter last subselection if multiple exist":
@@ -198,7 +198,7 @@ suite "general":
     Caused by: ThirdException
     """.unindent
     
-    processLines(newStringStream(input), output, main, @[sel], false, 999'u, sel1, false, true)
+    processLines(newStringStream(input), output, main, nil, nil, @[sel], false, 999'u, sel1, false, true)
     check(output.data == expected)
 
   test "multiline entry can filter last subselection if one exists":
@@ -209,6 +209,25 @@ suite "general":
     Caused by: Exception2
     """.unindent
     
-    processLines(newStringStream(input), output, main, @[sel], false, 999'u, sel1, false, true)
+    processLines(newStringStream(input), output, main, nil, nil, @[sel], false, 999'u, sel1, false, true)
     check(output.data == expected)
 
+  test "call with range selectors returns range when no subs":
+    let expected = """
+    Time3 DEBUG: Thread1 - Method2: Event1
+    """.unindent
+    
+    processLines(newStringStream(input), output, main, re("Time3"), re("Time4"), @[], false, 999'u, nil, true, false)
+    check(expected == output.data)
+
+  test "call with range selectors returns range with sub":
+    let expected = """
+    Time6 WARN: Thread3 - Method2: Exception1
+      frame1
+      frame2
+    Caused by: Exception2
+      frame3
+    """.unindent
+    
+    processLines(newStringStream(input), output, main, re("Time6"), re("Time7"), @[], false, 999'u, nil, true, false)
+    check(expected == output.data)

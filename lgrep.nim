@@ -88,6 +88,8 @@ var subLineSelector: Selector = nil
 var debug: bool = false
 var printHelp: bool = false
 var file: File = nil
+var fromRe: Regex = nil
+var toRe: Regex = nil
 
 for kind, key, val in getopt():
   case kind
@@ -119,6 +121,10 @@ for kind, key, val in getopt():
       showOnlyLastSublineMatched = true
     of "debug", "d":
       debug = true
+    of "fromPattern", "f":
+      fromRe = re(val)
+    of "toPattern", "t":
+      toRe = re(val)
   of cmdEnd: assert(false) # cannot happen
 
 if subLinePattern != nil:
@@ -141,8 +147,8 @@ else:
    let mainRe: Regex = if entryLinePattern == "": nil else: re(entryLinePattern)
    if isNil(filename): 
       let input = newFileStream(stdin)
-      processLines(input, newFileStream(stdout), mainRe, selectors, printLineNrs, maxMatches, sublineSelector, includeEntryLine, showOnlyLastSublineMatched)
+      processLines(input, newFileStream(stdout), mainRe, fromRe, toRe, selectors, printLineNrs, maxMatches, sublineSelector, includeEntryLine, showOnlyLastSublineMatched)
    else: 
       let input = newFileStream(filename, fmRead)
-      processLines(input, newFileStream(stdout), mainRe, selectors, printLineNrs, maxMatches, sublineSelector, includeEntryLine, showOnlyLastSublineMatched)
+      processLines(input, newFileStream(stdout), mainRe, fromRe, toRe, selectors, printLineNrs, maxMatches, sublineSelector, includeEntryLine, showOnlyLastSublineMatched)
   

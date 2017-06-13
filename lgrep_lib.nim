@@ -25,6 +25,10 @@ SOFTWARE.
 import re, streams, strutils
 
 type
+    RangeState = enum
+        rsBefore, rsWithin, rsAfter
+
+type
     Selector* = ref object
         invert*: bool
         matcher*: Regex
@@ -40,7 +44,6 @@ proc printLine(line: string, nr: uint, includeNr: bool): string =
         result = format("$1: $2", nr, line)
     else:
         result = line
-#    echo "printLine: ", result
         
 proc matchSelector(line: string, selector: Selector): bool =
     return selector.invert xor matches(line, selector.matcher)
@@ -51,45 +54,49 @@ proc matchAll(line: string, selectors: seq[Selector]): bool =
         if not matchSelector(line, selector):
             return false
 
-proc processLines*(input: Stream, output: Stream, mainRe: Regex, selectors: seq[Selector], includeLineNr: bool, maxMatches: uint, subSelector: Selector, includeMain: bool, printOnlyLastSub: bool) =
+proc processLines*(input: Stream, output: Stream, mainRe: Regex, startRe: Regex, endRe: Regex, selectors: seq[Selector], includeLineNr: bool, maxMatches: uint, subSelector: Selector, includeMain: bool, printOnlyLastSub: bool) =
 
     var nMatches: uint = maxMatches + 1
     var line: string = ""
     var isMainLine: bool = mainRe == nil
-#    let shouldPrintMain = includeMain or mainRe == nil
     var isPrevMainLine = false
     var isMatchingRange = false
-    var wasMatchingRange = false
     var lineNr: uint
-#    var prevLine: string = nil
     var lineToPrint: string = ""
-    
+    var rangePos: RangeState = if isNil(startRe): rsWithin else: rsBefore
+
     while nMatches > 0'u and input.readLine(line):
         lineNr = lineNr + 1
         isPrevMainLine = isMainLine
         isMainLine = mainRe == nil or matches(line, mainRe)
         if isMainLine:
+            if rangePos == rsBefore:
+                rangePos = if matches(line, startRe): rsWithin else: rsBefore
+            elif rangePos == rsWithin and not isNil(endRe):
+                rangePos = if matches(line, endRe): rsAfter else: rsWithin
+            else: discard
             if lineToPrint != "":
                 output.writeLine(lineToPrint)
                 lineToPrint = ""
             else: discard
-            wasMatchingRange = isMatchingRange
-            isMatchingRange = matchAll(line, selectors)
-            # if we have a matching main line
-            if isMatchingRange:
-                nMatches = nMatches - 1
-                if includeMain and nMatches > 0'u:
-                    output.writeLine(printLine(line, lineNr, includeLineNr))
+            if rangePos == rsWithin:
+                isMatchingRange = matchAll(line, selectors)
+                # if we have a matching main line
+                if isMatchingRange:
+                    nMatches = nMatches - 1
+                    if includeMain and nMatches > 0'u:
+                        output.writeLine(printLine(line, lineNr, includeLineNr))
+                    else: discard
                 else: discard
             else: discard
         else:
-            if isMatchingRange:
+            if isMatchingRange and rangePos == rsWithin:
                 if subSelector == nil or matchSelector(line, subSelector):
                     let printOut = printLine(line, lineNr, includeLineNr)
                     if printOnlyLastSub:
                         lineToPrint = printOut
                     else:
-                      output.writeLine(printOut)
+                        output.writeLine(printOut)
                 else: discard
             else: discard
     if lineToPrint != "":
