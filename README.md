@@ -67,12 +67,12 @@ For now, lgrep -h is your friend:
     Specifies a regex pattern to be applied ignoring character case.
     Apart from that this pattern is treated equally to a -i pattern.
     
-    -x=<pattern> or --exclude=<pattern e.g. -x="status=OK"
+    -x=<pattern> or --exclude=<pattern> e.g. -x="status=OK"
     Specifies a regex pattern. Entries that match the pattern will be
     excluded from the result set.
     Multiple patterns can be specified on the command line by repeating 
     '-x=<pattern1> -x=<pattern2>'. A log entry will have to match 
-    all patterns specified to be included in the result set.
+    all patterns specified to be excluded from the result set.
     
     -X=<pattern> or --excludeIgnoreCase=<pattern>
     Specifies a regex pattern to be applied ignoring character case.
