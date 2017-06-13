@@ -1,7 +1,7 @@
 # **lgrep**
 A variation on grep, targeting log files
 
-**lgrep** is a variation on **grep**, developed specifically for efficient searching through application log files. Though most of the time an entry in a log file consists of one line, sometimes it spans multiple lines. A log entry usually consists of some metadata (e.g date, time, code reference) and a message. Sometimes the message part may take up multiple lines, e.g. if it contains a whole JSON object or a whole stack trace.
+**lgrep** is a variation on **grep**, developed specifically for efficient searching through application log files. Though most of the time an entry in a log file consists of one line, sometimes it spans multiple lines. A log entry usually consists of some metadata (e.g date, time, code reference) and a message. Sometimes the message part takes up multiple lines, e.g. if it contains a whole JSON object or a whole stack trace.
 
 ## The problem
 When filtering log entries from log files I would usually want to keep every log entry intact, even if it spans several lines. Tools like **grep**, **sed** perform selection on a per line basis, so if you for instance use grep, you will get only one line of every multiline log entry.
