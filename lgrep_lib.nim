@@ -32,12 +32,13 @@ type
     Selector* = ref object
         invert*: bool
         matcher*: Regex
+        pattern*: string
 
-proc newSelector*(pattern: string): Selector = 
-    return Selector(invert: false, matcher: re(pattern))
+proc newSelector*(aPattern: string, mirror = false): Selector =
+    return Selector(invert: mirror, matcher: re(aPattern), pattern: aPattern)
 
 proc matches(line: string, regex: Regex): bool =
-    return find(line, regex) > -1
+    result = find(line, regex) > -1
 
 proc printLine(line: string, nr: uint, includeNr: bool): string =
     if includeNr:
@@ -45,14 +46,14 @@ proc printLine(line: string, nr: uint, includeNr: bool): string =
     else:
         result = line
         
-proc matchSelector(line: string, selector: Selector): bool =
-    return selector.invert xor matches(line, selector.matcher)
-    
-proc matchAll(line: string, selectors: seq[Selector]): bool =
+proc matchSelector*(line: string, selector: Selector): bool =
+    result = selector.invert xor matches(line, selector.matcher)
+
+proc matchAll*(line: string, selectors: seq[Selector]): bool =
     result = true
     for selector in selectors:
         if not matchSelector(line, selector):
-            return false
+            result = false
 
 proc processLines*(input: Stream, output: Stream, mainRe: Regex, startRe: Regex, endRe: Regex, selectors: seq[Selector], includeLineNr: bool, maxMatches: uint, subSelector: Selector, includeMain: bool, printOnlyLastSub: bool) =
 

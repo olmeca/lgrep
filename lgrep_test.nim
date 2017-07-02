@@ -48,23 +48,58 @@ suite "general":
       frame3
     Time7 DEBUG: Thread2 - Method2: Event2
     """.unindent
-    
-    let main = re("Time")
+
     let output: StringStream = newStringStream()
-    
+
+  let line = "The quick brown fox jumps over the lazy dog."
+
+  let main = re("Time")
+
+  test "matches string with matching inclusion selector":
+    check(matchSelector(line, newSelector("lazy")))
+
+
+  test "does not match string on non-matching inclusion selector":
+    check(not matchSelector(line, newSelector("crazy")))
+
+
+  test "matches string with non-matching exclusion selector":
+    check(matchSelector(line, newSelector("crazy", true)))
+
+
+  test "does not match string on matching exclusion selector":
+    check(not matchSelector(line, newSelector("lazy", true)))
+
+
+  test "matches string with multiple matching inclusion selectors":
+    let selectors: seq[Selector] = @[newSelector("lazy"), newSelector("brown")]
+    check(matchAll(line, selectors))
+
+
+  test "matches string with multiple non-matching exclusion selectors":
+    let selectors: seq[Selector] = @[newSelector("crazy", true), newSelector("white", true)]
+    check(matchAll(line, selectors))
+
+
+  test "does not match string with multiple inclusion selectors if one does not match":
+    let selectors: seq[Selector] = @[newSelector("lazy"), newSelector("white")]
+    check(not matchAll(line, selectors))
+
+
+  test "does not match string with multiple exclusion selectors if any matches":
+    let selectors: seq[Selector] = @[newSelector("crazy", true), newSelector("brown", true)]
+    check(not matchAll(line, selectors))
+
 
   test "call without selectors returns input":
-    
     processLines(newStringStream(input), output, nil, nil, nil, @[], false, 999'u, nil, true, false)
     check(output.data == input)
 
-  test "inclusion selector returns empty resul if no match exists":
-    
-    let sel = newSelector("TRACE")
+  test "inclusion selector returns empty result if no match exists":
     let expected = ""
 
-    processLines(newStringStream(input), output, main, nil, nil, @[sel], false, 999'u, nil, true, false)
-    check(output.data == expected)
+    processLines(newStringStream(input), output, main, nil, nil, @[newSelector("TRACE")], false, 999'u, nil, true, false)
+    check(output.data.strip() == expected)
 
   test "selects the line matching the unique inclusion selector":
     
@@ -118,12 +153,21 @@ suite "general":
 
   test "intersection of multiple exclusion selectors":
     
-    let sel1 = Selector(invert: true, matcher: re("INFO"))
-    let sel2 = Selector(invert: true, matcher: re("ERROR"))
+    let sel1 = newSelector("INFO", true)
+    let sel2 = newSelector("ERROR", true)
     let expected = """
     Time3 DEBUG: Thread1 - Method2: Event1
+    Time6 WARN: Thread3 - Method2: Exception1
+      frame1
+      frame2
+    Caused by: Exception2
+      frame3
     Time7 DEBUG: Thread2 - Method2: Event2
     """.unindent
+    
+    processLines(newStringStream(input), output, main, nil, nil, @[sel1, sel2], false, 999'u, nil, true, false)
+    check(output.data == expected)
+
 
   test "intersection of inclusion selector and exclusion selector":
     

@@ -58,7 +58,7 @@ proc writeHelp() = echo """
     excluded from the result set.
     Multiple patterns can be specified on the command line by repeating 
     '-x=<pattern1> -x=<pattern2>'. A log entry will have to match 
-    all patterns specified to be excluded from the result set.
+    at least one of the patterns specified to be excluded from the result set.
     
     -X=<pattern> or --excludeIgnoreCase=<pattern>
     Specifies a regex pattern to be applied ignoring character case.
