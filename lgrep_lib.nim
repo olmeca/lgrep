@@ -23,6 +23,7 @@ SOFTWARE.
 ]#
 
 import re, streams, strutils
+import posix
 
 type
     RangeState = enum
@@ -78,6 +79,8 @@ proc processLines*(input: Stream, output: Stream, mainRe: Regex, startRe: Regex,
             else: discard
             if lineToPrint != "":
                 output.writeLine(lineToPrint)
+                onSignal(SIGPIPE):
+                    return
                 lineToPrint = ""
             else: discard
             if rangePos == rsWithin:
@@ -87,6 +90,8 @@ proc processLines*(input: Stream, output: Stream, mainRe: Regex, startRe: Regex,
                     nMatches = nMatches - 1
                     if includeMain and nMatches > 0'u:
                         output.writeLine(printLine(line, lineNr, includeLineNr))
+                        onSignal(SIGPIPE):
+                            return
                     else: discard
                 else: discard
             else: discard
@@ -98,9 +103,13 @@ proc processLines*(input: Stream, output: Stream, mainRe: Regex, startRe: Regex,
                         lineToPrint = printOut
                     else:
                         output.writeLine(printOut)
+                        onSignal(SIGPIPE):
+                            return
                 else: discard
             else: discard
     if lineToPrint != "":
         output.writeLine(lineToPrint)
+        onSignal(SIGPIPE):
+            return
         lineToPrint = ""
     else: discard

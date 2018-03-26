@@ -127,6 +127,7 @@ const helptext = "lgrep - specialized grep for application log files" & """
 
 proc writeHelp() = echo helptext
 
+
 var filename: string = nil
 var printLineNrs: bool = false
 var maxMatches: uint = 9223372036854775807'u
@@ -196,10 +197,12 @@ if printHelp:
    writeHelp()
 else:
    let mainRe: Regex = if entryLinePattern == "": nil else: re(entryLinePattern)
-   if isNil(filename): 
-      let input = newFileStream(stdin)
-      processLines(input, newFileStream(stdout), mainRe, fromRe, toRe, selectors, printLineNrs, maxMatches, sublineSelector, includeEntryLine, showOnlyLastSublineMatched)
-   else: 
-      let input = newFileStream(filename, fmRead)
-      processLines(input, newFileStream(stdout), mainRe, fromRe, toRe, selectors, printLineNrs, maxMatches, sublineSelector, includeEntryLine, showOnlyLastSublineMatched)
-  
+   try:
+      if isNil(filename): 
+         let input = newFileStream(stdin)
+         processLines(input, newFileStream(stdout), mainRe, fromRe, toRe, selectors, printLineNrs, maxMatches, sublineSelector, includeEntryLine, showOnlyLastSublineMatched)
+      else: 
+         let input = newFileStream(filename, fmRead)
+         processLines(input, newFileStream(stdout), mainRe, fromRe, toRe, selectors, printLineNrs, maxMatches, sublineSelector, includeEntryLine, showOnlyLastSublineMatched)
+   except IOError:
+      quit(1)
